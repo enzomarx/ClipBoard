@@ -1,7 +1,7 @@
-import PyQt6.QtCore as QtCore
-import PyQt6.QtGui as QtGui
-import PyQt6.QtWidgets as QtWidgets
-from PyQt6.QtWebEngine import QWebEngineView
+import PyQt6.QtCore as QtCore  #PyQt6
+import PyQt6.QtGui as QtGui       #PyQt6
+import PyQt6.QtWidgets as QtWidgets   #PyQt6
+from PyQt6.QtWebEngine import QWebEngineView  #PyQt6-WebEngine
 import sys
 
 class MainWindow(QtWidgets.QMainWindow):
