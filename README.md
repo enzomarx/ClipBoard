@@ -1,99 +1,67 @@
-
 ## README - ClipBoard+
 
-### Descrição
+### Description
 
-ClipBoard+ é um gerenciador de área de transferência multifuncional que amplia as capacidades do clipboard tradicional. Ele permite salvar, organizar e acessar facilmente vários trechos de texto, links, imagens e outros tipos de dados copiados.
+ClipBoard+ is a multifunctional clipboard manager that extends the capabilities of the traditional clipboard. It allows you to easily save, organize, and access multiple snippets of copied text, links, images, and other data types.
 
-### Recursos
+### Features
 
-* Armazenamento persistente de itens da área de transferência.
-* Categorização e organização de itens para acesso rápido.
-* Busca por itens salvos.
-* Visualização de itens de texto, links e imagens.
-* Edição de itens de texto salvos.
-* Suporte para diferentes formatos de dados (texto, links, imagens, etc.).
-* Exportação e importação de dados salvos.
-* Interface de usuário amigável e intuitiva.
-* Tradução de idiomas (opcional).
+* Persistent storage of clipboard items.
+* Categorization and organization of items for quick access.
+* Search for saved items.
+* Preview of text, link, and image items.
+* Editing of saved text items.
+* Support for different data formats (text, links, images, etc.).
+* Export and import of saved data.
+* User-friendly and intuitive interface.
+* Language translation (optional).
 
+### Prerequisites
 
-### Pré-requisitos
+* Windows, macOS, or Linux operating system (specific compatibility may vary depending on the application version).
+* Python 3.x installed
 
-* Sistema operacional Windows, macOS ou Linux (a compatibilidade específica pode variar de acordo com a versão do aplicativo).
-* Python 3.x instalado
+### Installation
 
+1. **Clone the repository:**
 
-### Instalação
+```bash
+git clone https://github.com/your_username/ClipBoardPlus.git
+```
 
-1. **Clone o repositório:**
+2. **Access the project directory:**
 
-   ```bash
-   git clone https://github.com/seu_usuario/ClipBoardPlus.git
-   ```
+```bash
+cd ClipBoardPlus
+```
 
-2. **Acesse o diretório do projeto:**
+3. **Install dependencies:**
 
-   ```bash
-   cd ClipBoardPlus
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-3. **Instale as dependências:**
+4. **Run the application:**
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+python clipboard_plus.py
+```
 
-4. **Execute o aplicativo:**
+### Usage
 
-   ```bash
-   python clipboard_plus.py
-   ```
+1. **Start ClipBoard+:** Follow the installation instructions to run the application.
+2. **Save clipboard items:** When you copy text, links, or images, they will be automatically saved to ClipBoard+.
+3. **Access saved items:** Use the application's interface to view, edit, search, and organize saved items.
+4. **Paste saved items:** Select the desired item in the ClipBoard+ interface and use the keyboard shortcut to paste it into another application.
 
+### Contributions
 
-### Uso
+ClipBoard+ is an open-source project and you can contribute with improvements and suggestions. Submit your pull requests to the GitHub repository.
 
-1. **Inicie o ClipBoard+:** Siga as instruções de instalação para executar o aplicativo.
-2. **Salve itens da área de transferência:** Ao copiar texto, links ou imagens, eles serão automaticamente salvos no ClipBoard+.
-3. **Acesse itens salvos:** Utilize a interface do aplicativo para visualizar, editar, pesquisar e organizar os itens salvos.
-4. **Cole itens salvos:** Selecione o item desejado na interface do ClipBoard+ e use o atalho de teclado para colá-lo em outro aplicativo.
+### License
 
-
-### Contribuições
-
-ClipBoard+ é um projeto open-source e você pode contribuir com melhorias e sugestões. Envie suas pull requests para o repositório do GitHub.
-
-
-### Licença
-
-MIT License
-
+Creative Commons Attribution 4.0 International (CC BY 4.0)
 
 ### Feedback
 
-Agradecemos seu feedback! Envie sugestões de melhorias ou reporte bugs através de issues no repositório do GitHub.
-
-### Estrutura
-
-ClipBoardPlus/
-├── README.md                  # Arquivo README com descrição do projeto
-├── LICENSE                   # Licença do software
-├── requirements.txt           # Arquivo com as dependências do projeto
-├── setup.py                   # Script para configuração e instalação do projeto
-├── src/                       # Diretório principal para o código-fonte
-│   ├── clipboard_plus.py       # Arquivo principal com a lógica principal do aplicativo
-│   ├── data/                   # Diretório para armazenar dados (opcional)
-│   │   ├── categories.json     # Arquivo JSON com categorias de itens salvos
-│   │   └── items.json         # Arquivo JSON com itens salvos
-│   ├── gui/                   # Diretório para interface gráfica (opcional)
-│   │   ├── main_window.py     # Arquivo principal da interface gráfica
-│   │   ├── styles.css         # Arquivo CSS para estilizar a interface
-│   │   └── images/            # Diretório para imagens da interface
-│   ├── utils/                 # Diretório para funções utilitárias
-│   │   ├── clipboard_functions.py # Funções para interagir com a área de transferência
-│   │   └── file_functions.py     # Funções para manipular arquivos
-│   └── tests/                  # Diretório para testes (opcional)
-│       ├── test_clipboard_plus.py # Arquivo de teste para o código principal
-│       └── test_utils.py        # Arquivo de teste para funções utilitárias
-├── tox.ini                    # Arquivo de configuração para testes com tox
-└── .gitignore                 # Arquivo com arquivos e diretórios a serem ignorados pelo Git
+We appreciate your feedback! Submit suggestions for improvements or report bugs through issues on the GitHub repository.
