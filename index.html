@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cstyle%3e.accent-fill %7b fill: %236C4DFF; %7d .secondary-fill %7b fill: %23E6A6FF; %7d .accent-stroke %7b stroke: %236C4DFF; %7d @media (prefers-color-scheme: light) %7b .accent-fill %7b fill: %23E6A6FF; %7d .secondary-fill %7b fill: %236C4DFF; %7d .accent-stroke %7b stroke: %23E6A6FF; %7d %7d%3c/style%3e%3cpath d='M31 4H17C15.3431 4 14 5.34315 14 7V10H34V7C34 5.34315 32.6569 4 31 4Z' class='accent-fill' /%3e%3cpath d='M38 10H10C7.79086 10 6 11.7909 6 14V40C6 42.2091 7.79086 44 10 44H38C40.2091 44 42 42.2091 42 40V14C42 11.7909 40.2091 10 38 10Z' class='secondary-fill' /%3e%3cpath d='M38 10H10C7.79086 10 6 11.7909 6 14V40C6 42.2091 7.79086 44 10 44H38C40.2091 44 42 42.2091 42 40V14C42 11.7909 40.2091 10 38 10Z' class='accent-stroke' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' /%3e%3cpath d='M31 4H17C15.3431 4 14 5.34315 14 7V10H34V7C34 5.34315 32.6569 4 31 4Z' class='accent-stroke' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' /%3e%3ccircle cx='17' cy='24' r='2' class='accent-fill' /%3e%3ccircle cx='31' cy='24' r='2' class='accent-fill' /%3e%3cpath d='M17 32C18 34 22 35 24 35C26 35 30 34 31 32' class='accent-stroke' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' /%3e%3c/svg%3e" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClipBoard+</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --color-background: #110d21;
+            --color-primary: #1f1933;
+            --color-secondary: #312b4f;
+            --color-secondary-hover: #453d6f;
+            --color-accent: #6C4DFF;
+            --color-accent-hover: #8a75ff;
+            --color-pink-accent: #E6A6FF;
+            --color-text-main: #edeaff;
+            --color-text-secondary: #a199c4;
+            --color-text-on-accent: #ffffff;
+            --color-card-1: #2a2147;
+            --color-card-2: #214742;
+            --color-card-3: #47213a;
+            --color-card-4: #21472c;
+            --color-card-5: #473c21;
+        }
+        html.light {
+            --color-background: #f5f3ff;
+            --color-primary: #ffffff;
+            --color-secondary: #e9e4ff;
+            --color-secondary-hover: #d9d1f7;
+            --color-accent: #E6A6FF;
+            --color-accent-hover: #d993f2;
+            --color-pink-accent: #6C4DFF;
+            --color-text-main: #1f1933;
+            --color-text-secondary: #5c567d;
+            --color-text-on-accent: #1f1933;
+            --color-card-1: #e9e4ff;
+            --color-card-2: #e4f7ff;
+            --color-card-3: #ffe4f7;
+            --color-card-4: #e4ffeb;
+            --color-card-5: #fffde4;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--color-secondary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--color-secondary-hover);
+        }
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(1rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.3s ease-out forwards;
+        }
+    </style>
+    <script>
+        // Set theme before page load to prevent flash of unstyled content
+        (function() {
+            const theme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'light') {
+                document.documentElement.classList.add('light');
+            } else if (theme === 'dark') {
+                // No class needed, dark is default
+            } else if (prefersDark) {
+                // No class needed
+            } else {
+                document.documentElement.classList.add('light');
+            }
+        })();
+
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                'background': 'var(--color-background)',
+                'primary': 'var(--color-primary)',
+                'secondary': 'var(--color-secondary)',
+                'secondary-hover': 'var(--color-secondary-hover)',
+                'accent': 'var(--color-accent)',
+                'accent-hover': 'var(--color-accent-hover)',
+                'pink-accent': 'var(--color-pink-accent)',
+                'text-main': 'var(--color-text-main)',
+                'text-secondary': 'var(--color-text-secondary)',
+                'text-on-accent': 'var(--color-text-on-accent)',
+              }
+            }
+          }
+        }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-background text-text-main transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

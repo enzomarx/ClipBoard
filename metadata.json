@@ -1,0 +1,8 @@
+{
+  "name": "ClipBoard+",
+  "description": "A multifunctional clipboard manager that extends the capabilities of the traditional clipboard. It allows you to easily save, organize, and access multiple snippets of copied text, links, images, and other data types.",
+  "requestFramePermissions": [
+    "clipboard-read",
+    "clipboard-write"
+  ]
+}
