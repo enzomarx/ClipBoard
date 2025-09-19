@@ -127,6 +127,30 @@ export const useClipboardManager = () => {
         }
     }, [categories]);
 
+    const deleteCategory = useCallback((categoryToDelete: string) => {
+        if (DEFAULT_CATEGORIES.includes(categoryToDelete)) {
+            console.warn(`Attempted to delete a default category: ${categoryToDelete}`);
+            return;
+        }
+
+        // Re-assign items from the deleted category to 'General'
+        setItems(prevItems =>
+            prevItems.map(item =>
+                item.category === categoryToDelete ? { ...item, category: 'General' } : item
+            )
+        );
+
+        // Remove the category itself
+        setCategories(prevCategories =>
+            prevCategories.filter(cat => cat !== categoryToDelete)
+        );
+
+        // If the active category was the one deleted, reset to 'All'
+        if (activeCategory === categoryToDelete) {
+            setActiveCategory('All');
+        }
+    }, [activeCategory]);
+
     const toggleSelectItem = useCallback((id: string) => {
         setSelectedItems(prev => 
             prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
@@ -221,6 +245,7 @@ export const useClipboardManager = () => {
         updateItem,
         deleteItem,
         addCategory,
+        deleteCategory,
         setActiveCategory,
         setSearchTerm,
         exportData,

@@ -2,17 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from './Icons';
 import { Logo } from './Logo';
 import { getCategoryIcon } from '../utils';
+import { DEFAULT_CATEGORIES } from '../constants';
 
 interface SidebarProps {
   categories: string[];
   activeCategory: string;
   setActiveCategory: (category: string) => void;
   onAddCategory: (name: string) => void;
+  onDeleteCategory: (name: string) => void;
   isCollapsed: boolean;
   onToggle: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategory, setActiveCategory, onAddCategory, isCollapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategory, setActiveCategory, onAddCategory, onDeleteCategory, isCollapsed, onToggle }) => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const addCategoryInputRef = useRef<HTMLInputElement>(null);
@@ -77,27 +79,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategory, se
                 )}
               </button>
             </li>
-            {categories.map(cat => (
-              <li key={cat}>
-                <button
-                  onClick={() => setActiveCategory(cat)}
-                  title={isCollapsed ? cat : undefined}
-                  className={`w-full text-left transition-colors duration-200 font-medium border-l-4 flex items-center ${
-                    isCollapsed ? 'justify-center py-3' : 'px-6 py-2.5'
-                  } ${
-                    activeCategory === cat 
-                    ? 'border-accent text-text-main' 
-                    : 'border-transparent text-text-secondary hover:text-text-main'
-                  }`}
-                >
-                  {isCollapsed ? (
-                        <Icon name={getCategoryIcon(cat)} className="w-6 h-6" />
-                  ) : (
-                    <span className="truncate">{cat}</span>
+            {categories.map(cat => {
+              const isDefault = DEFAULT_CATEGORIES.includes(cat);
+              return (
+                <li key={cat} className="group relative">
+                  <button
+                    onClick={() => setActiveCategory(cat)}
+                    title={isCollapsed ? cat : undefined}
+                    className={`w-full text-left transition-colors duration-200 font-medium border-l-4 flex items-center ${
+                      isCollapsed ? 'justify-center py-3' : 'px-6 py-2.5'
+                    } ${
+                      activeCategory === cat 
+                      ? 'border-accent text-text-main' 
+                      : 'border-transparent text-text-secondary hover:text-text-main'
+                    }`}
+                  >
+                    {isCollapsed ? (
+                          <Icon name={getCategoryIcon(cat)} className="w-6 h-6" />
+                    ) : (
+                      <span className="truncate">{cat}</span>
+                    )}
+                  </button>
+                  {!isCollapsed && !isDefault && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteCategory(cat);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-text-secondary hover:text-red-500 hover:bg-secondary invisible group-hover:visible transition-colors"
+                      aria-label={`Delete category ${cat}`}
+                    >
+                      <Icon name="close" className="w-4 h-4" />
+                    </button>
                   )}
-                </button>
-              </li>
-            ))}
+                </li>
+              );
+            })}
              {!isCollapsed && (
                 <li>
                     {isAddingCategory ? (

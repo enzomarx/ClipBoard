@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useClipboardManager } from './hooks/useClipboardManager';
 import { Header } from './components/Header';
@@ -16,7 +15,7 @@ import { ImageEditor } from './components/ImageEditor';
 const App: React.FC = () => {
     const {
         items, categories, activeCategory, searchTerm, isLoading, selectedItems, clipboardHistory, storageError,
-        addItem, updateItem, deleteItem, addCategory,
+        addItem, updateItem, deleteItem, addCategory, deleteCategory,
         setActiveCategory, setSearchTerm, exportData, importData,
         toggleSelectItem, selectAllFilteredItems, clearSelection, deleteSelectedItems, moveSelectedItems,
         reorderItems, toggleTaskCompleted, addToClipboardHistory, clearClipboardHistory,
@@ -635,6 +634,7 @@ const App: React.FC = () => {
                 activeCategory={activeCategory} 
                 setActiveCategory={setActiveCategory} 
                 onAddCategory={addCategory}
+                onDeleteCategory={deleteCategory}
                 isCollapsed={isSidebarCollapsed}
                 onToggle={toggleSidebar}
             />
