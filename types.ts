@@ -25,6 +25,7 @@ export interface ClipboardItem {
   category: string;
   createdAt: number;
   color?: string;
+  tags?: string[];
 }
 
 export interface ClipboardHistoryItem {

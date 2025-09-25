@@ -163,6 +163,17 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
             <div className="flex-grow flex pt-8">
                 {renderContent()}
             </div>
+
+            {item.tags && item.tags.length > 0 && (
+                <div className="px-4 py-2 flex flex-wrap gap-2">
+                    {item.tags.map(tag => (
+                        <span key={tag} className="bg-secondary text-text-secondary text-xs font-semibold px-2 py-1 rounded-full">
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+            )}
+
             <div className="flex items-center justify-between p-2 border-t border-secondary" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center space-x-2 text-text-secondary">
                     <Icon name={getCategoryIcon(item.category)} className="w-4 h-4" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import type { ClipboardItem, TaskListContent, ClipboardHistoryItem } from '../types';
 import { ItemType } from '../types';
@@ -55,7 +56,7 @@ export const useClipboardManager = () => {
     }, [items, categories, clipboardHistory, isLoading, storageError]);
 
 
-    const addItem = useCallback((content: string, type: ItemType, category: string = "General", title: string = ""): ClipboardItem => {
+    const addItem = useCallback((content: string, type: ItemType, category: string = "General", title: string = "", tags: string[] = []): ClipboardItem => {
         const detectedType = type === ItemType.Text && isLink(content) ? ItemType.Link : type;
         const randomColor = CARD_COLOR_NAMES[Math.floor(Math.random() * CARD_COLOR_NAMES.length)];
         const newItem: ClipboardItem = {
@@ -66,12 +67,13 @@ export const useClipboardManager = () => {
             category,
             createdAt: Date.now(),
             color: randomColor,
+            tags,
         };
         setItems(prev => [newItem, ...prev]);
         return newItem;
     }, []);
 
-    const updateItem = useCallback((id: string, newContent: string, newCategory?: string, newTitle?: string) => {
+    const updateItem = useCallback((id: string, newContent: string, newCategory?: string, newTitle?: string, newTags?: string[]) => {
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const updatedItem: ClipboardItem = { ...item, content: newContent };
@@ -80,6 +82,9 @@ export const useClipboardManager = () => {
                 }
                 if (typeof newTitle !== 'undefined') {
                     updatedItem.title = newTitle;
+                }
+                if (typeof newTags !== 'undefined') {
+                    updatedItem.tags = newTags;
                 }
                  if (updatedItem.type !== ItemType.TaskList && updatedItem.type === ItemType.Text && isLink(newContent)) {
                     updatedItem.type = ItemType.Link;

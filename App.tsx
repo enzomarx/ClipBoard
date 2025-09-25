@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useClipboardManager } from './hooks/useClipboardManager';
 import { Header } from './components/Header';
@@ -7,7 +8,7 @@ import { Modal } from './components/Modal';
 import { Icon } from './components/Icons';
 import type { ClipboardItem, Task, TaskListContent, ClipboardHistoryItem } from './types';
 import { ItemType } from './types';
-import { translateText } from './services/geminiService';
+import { translateText, analyzeContentForOrganization } from './services/geminiService';
 import { SUPPORTED_LANGUAGES } from './constants';
 import { BulkActionsBar } from './components/BulkActionsBar';
 import { ImageEditor } from './components/ImageEditor';
@@ -29,6 +30,7 @@ const App: React.FC = () => {
     const [newItemContent, setNewItemContent] = useState('');
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('General');
+    const [newItemTags, setNewItemTags] = useState<string[]>([]);
     const [taskListData, setTaskListData] = useState<TaskListContent>({ title: '', tasks: [] });
 
     const [translationResult, setTranslationResult] = useState<{ text: string; error: string; loading: boolean }>({ text: '', error: '', loading: false });
@@ -41,6 +43,7 @@ const App: React.FC = () => {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         return (savedTheme as 'light' | 'dark') || (prefersDark ? 'dark' : 'light');
     });
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const lastCheckedContentRef = React.useRef<string>('');
@@ -95,7 +98,11 @@ const App: React.FC = () => {
                      return false;
                  }
             }
-            return (item.title?.toLowerCase().includes(searchText) || item.content.toLowerCase().includes(searchText));
+            return (
+                item.title?.toLowerCase().includes(searchText) || 
+                item.content.toLowerCase().includes(searchText) ||
+                (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchText)))
+            );
         }), [items, activeCategory, searchTerm]);
 
     const columns = useMemo(() => {
@@ -261,6 +268,30 @@ const App: React.FC = () => {
         return () => clearInterval(intervalId);
     }, [modalState.type, clipboardPrompt, selectedItems.length, items, addToClipboardHistory]);
 
+    const initiateNewItemFromContent = async (content: string, type: ItemType) => {
+        setModalState({ type: 'add', item: null });
+        setNewItemContent(content);
+        setNewItemTitle('');
+        setNewItemCategory(type === ItemType.Image ? 'Images' : 'General');
+        setNewItemTags([]);
+
+        setIsAnalyzing(true);
+        try {
+            const suggestions = await analyzeContentForOrganization(content, type, categories);
+            setNewItemTitle(suggestions.title || '');
+            // Check if suggested category exists, otherwise fallback to a default
+            if (suggestions.category && categories.includes(suggestions.category)) {
+                 setNewItemCategory(suggestions.category);
+            }
+            setNewItemTags(suggestions.tags || []);
+        } catch (error) {
+            console.error("AI analysis failed:", error);
+            // Optionally: show a user-facing toast/notification
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     useEffect(() => {
         const handlePaste = async (event: ClipboardEvent) => {
             const target = event.target as HTMLElement;
@@ -280,8 +311,7 @@ const App: React.FC = () => {
                             const base64data = reader.result as string;
                             if (base64data) {
                                 addToClipboardHistory(base64data, ItemType.Image);
-                                const newItem = addItem(base64data, ItemType.Image, 'Images');
-                                handleOpenModal('edit', newItem);
+                                initiateNewItemFromContent(base64data, ItemType.Image);
                             }
                         };
                         reader.readAsDataURL(blob);
@@ -292,8 +322,7 @@ const App: React.FC = () => {
                         const text = await blob.text();
                         if (text.trim()) {
                             addToClipboardHistory(text, ItemType.Text);
-                            const newItem = addItem(text, ItemType.Text);
-                            handleOpenModal('edit', newItem);
+                            initiateNewItemFromContent(text, ItemType.Text);
                         }
                         return;
                     }
@@ -306,7 +335,7 @@ const App: React.FC = () => {
 
         document.addEventListener('paste', handlePaste);
         return () => document.removeEventListener('paste', handlePaste);
-    }, [addItem, addToClipboardHistory]);
+    }, [addItem, addToClipboardHistory, categories]);
 
     const handleOpenModal = (type: 'add' | 'edit' | 'translate' | 'history', item?: ClipboardItem | null) => {
         setModalState({ type, item: item || null });
@@ -322,12 +351,14 @@ const App: React.FC = () => {
              } else {
                  setNewItemContent(item.content);
                  setNewItemTitle(item.title || '');
+                 setNewItemTags(item.tags || []);
              }
             setNewItemCategory(item.category);
         } else if (type === 'add') {
             setNewItemContent('');
             setNewItemTitle('');
             setNewItemCategory(activeCategory !== 'All' ? activeCategory : 'General');
+            setNewItemTags([]);
             setTaskListData({ title: '', tasks: [{ id: crypto.randomUUID(), text: '', completed: false }] });
         } else if (type === 'translate' && item) {
             setTranslationResult({ text: '', error: '', loading: false });
@@ -347,6 +378,7 @@ const App: React.FC = () => {
         setNewItemContent('');
         setNewItemTitle('');
         setNewItemCategory('General');
+        setNewItemTags([]);
     };
 
     const handleSaveItem = () => {
@@ -356,7 +388,7 @@ const App: React.FC = () => {
             const content = JSON.stringify(taskListData);
             updateItem(modalState.item.id, content, newItemCategory);
         } else {
-            updateItem(modalState.item.id, newItemContent, newItemCategory, newItemTitle);
+            updateItem(modalState.item.id, newItemContent, newItemCategory, newItemTitle, newItemTags);
         }
         handleCloseModal();
     };
@@ -364,17 +396,17 @@ const App: React.FC = () => {
     const handleAddItem = () => {
         if (newItemCategory === 'Task List') {
              const content = JSON.stringify(taskListData);
-             addItem(content, ItemType.TaskList, newItemCategory);
+             addItem(content, ItemType.TaskList, newItemCategory, taskListData.title);
         } else {
             if (newItemContent.trim() || newItemTitle.trim()) {
-                addItem(newItemContent, ItemType.Text, newItemCategory, newItemTitle);
+                addItem(newItemContent, ItemType.Text, newItemCategory, newItemTitle, newItemTags);
             }
         }
         handleCloseModal();
     };
     
     const handleSaveFromHistory = (historyItem: ClipboardHistoryItem) => {
-        addItem(historyItem.content, historyItem.type, historyItem.type === 'image' ? 'Images' : 'General');
+        initiateNewItemFromContent(historyItem.content, historyItem.type);
     };
 
     const handleTaskChange = (index: number, text: string) => {
@@ -410,7 +442,7 @@ const App: React.FC = () => {
     
     const handleImageSave = (dataUrl: string) => {
         if(modalState.item) {
-            updateItem(modalState.item.id, dataUrl, modalState.item.category);
+            updateItem(modalState.item.id, dataUrl, modalState.item.category, modalState.item.title, modalState.item.tags);
             handleCloseModal();
         }
     };
@@ -452,44 +484,98 @@ const App: React.FC = () => {
             case 'edit':
                 const isTaskList = (modalState.type === 'edit' && modalState.item?.type === ItemType.TaskList) || (modalState.type === 'add' && newItemCategory === 'Task List');
                 const isImageItem = modalState.type === 'edit' && modalState.item?.type === ItemType.Image;
+                const isAddImage = modalState.type === 'add' && newItemContent.startsWith('data:image/');
 
-                if (isTaskList) {
-                    return (
-                        <div className="space-y-4">
-                             <input
-                                type="text"
-                                value={taskListData.title}
-                                onChange={e => setTaskListData(prev => ({...prev, title: e.target.value}))}
-                                placeholder="Task List Title"
-                                className="w-full bg-secondary p-2 rounded-md"
-                            />
-                            <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
-                                {taskListData.tasks.map((task, index) => (
-                                    <div key={task.id} className="flex items-center space-x-2">
-                                        <input
-                                            type="text"
-                                            value={task.text}
-                                            onChange={e => handleTaskChange(index, e.target.value)}
-                                            placeholder={`Task ${index + 1}`}
-                                            className="w-full bg-secondary p-2 rounded-md"
-                                        />
-                                        <button onClick={() => handleDeleteTask(index)} className="text-red-500 hover:text-red-400 p-1 rounded-full bg-secondary"><Icon name="delete" className="w-4 h-4" /></button>
+                const commonFields = (
+                    <>
+                        <select value={newItemCategory} onChange={e => setNewItemCategory(e.target.value)} className="w-full bg-secondary p-2 rounded-md">
+                            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-text-secondary">Tags</label>
+                            <div className="flex flex-wrap items-center gap-2 p-2 bg-secondary rounded-md min-h-[40px]">
+                                {newItemTags.map((tag, index) => (
+                                    <div key={index} className="flex items-center gap-1 bg-accent bg-opacity-30 text-accent text-sm rounded-full px-2 py-0.5">
+                                        <span>{tag}</span>
+                                        <button onClick={() => setNewItemTags(newItemTags.filter(t => t !== tag))} className="text-accent hover:text-white">
+                                            <Icon name="close" className="w-3 h-3"/>
+                                        </button>
                                     </div>
                                 ))}
-                            </div>
-                            <button onClick={handleAddTask} className="text-accent hover:underline text-sm">Add task</button>
-
-                            <select value={newItemCategory} onChange={e => setNewItemCategory(e.target.value)} className="w-full bg-secondary p-2 rounded-md">
-                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                            </select>
-                            <div className="flex justify-end">
-                                <button onClick={modalState.type === 'add' ? handleAddItem : handleSaveItem} className="bg-accent text-text-on-accent px-4 py-2 rounded-md hover:bg-accent-hover">Save</button>
+                                <input
+                                    type="text"
+                                    placeholder="Add a tag..."
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ',') {
+                                            e.preventDefault();
+                                            const tag = e.currentTarget.value.trim();
+                                            if (tag && !newItemTags.includes(tag)) {
+                                                setNewItemTags([...newItemTags, tag]);
+                                            }
+                                            e.currentTarget.value = '';
+                                        }
+                                    }}
+                                    className="bg-transparent outline-none flex-grow"
+                                />
                             </div>
                         </div>
-                    );
-                }
 
-                if (isImageItem) {
+                        <div className="flex justify-end">
+                            <button onClick={modalState.type === 'add' ? handleAddItem : handleSaveItem} className="bg-accent text-text-on-accent px-4 py-2 rounded-md hover:bg-accent-hover">Save</button>
+                        </div>
+                    </>
+                );
+
+                const renderForm = () => {
+                    if (isTaskList) {
+                        return (
+                            <div className="space-y-4">
+                                 <input
+                                    type="text"
+                                    value={taskListData.title}
+                                    onChange={e => setTaskListData(prev => ({...prev, title: e.target.value}))}
+                                    placeholder="Task List Title"
+                                    className="w-full bg-secondary p-2 rounded-md"
+                                />
+                                <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+                                    {taskListData.tasks.map((task, index) => (
+                                        <div key={task.id} className="flex items-center space-x-2">
+                                            <input
+                                                type="text"
+                                                value={task.text}
+                                                onChange={e => handleTaskChange(index, e.target.value)}
+                                                placeholder={`Task ${index + 1}`}
+                                                className="w-full bg-secondary p-2 rounded-md"
+                                            />
+                                            <button onClick={() => handleDeleteTask(index)} className="text-red-500 hover:text-red-400 p-1 rounded-full bg-secondary"><Icon name="delete" className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={handleAddTask} className="text-accent hover:underline text-sm">Add task</button>
+                                {commonFields}
+                            </div>
+                        );
+                    }
+    
+                    if (isImageItem || isAddImage) {
+                        return (
+                            <div className="space-y-4">
+                                <input
+                                    type="text"
+                                    placeholder="Title (optional)"
+                                    value={newItemTitle}
+                                    onChange={e => setNewItemTitle(e.target.value)}
+                                    className="w-full bg-secondary p-2 rounded-md"
+                                />
+                                <div className="flex justify-center bg-secondary p-2 rounded-md">
+                                    <img src={modalState.item?.content || newItemContent} alt="Pasted content preview" className="max-h-64 object-contain rounded" />
+                                </div>
+                                {commonFields}
+                            </div>
+                        );
+                    }
+                    
                     return (
                         <div className="space-y-4">
                             <input
@@ -499,43 +585,31 @@ const App: React.FC = () => {
                                 onChange={e => setNewItemTitle(e.target.value)}
                                 className="w-full bg-secondary p-2 rounded-md"
                             />
-                            <div className="flex justify-center bg-secondary p-2 rounded-md">
-                                <img src={modalState.item?.content} alt="Pasted content preview" className="max-h-64 object-contain rounded" />
-                            </div>
-                            <select value={newItemCategory} onChange={e => setNewItemCategory(e.target.value)} className="w-full bg-secondary p-2 rounded-md">
-                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                            </select>
-                            <div className="flex justify-end">
-                                <button onClick={handleSaveItem} className="bg-accent text-text-on-accent px-4 py-2 rounded-md hover:bg-accent-hover">Save</button>
-                            </div>
+                            <textarea
+                                value={newItemContent}
+                                onChange={e => setNewItemContent(e.target.value)}
+                                rows={10}
+                                placeholder="Content"
+                                className="w-full bg-secondary p-2 rounded-md"
+                            />
+                            {commonFields}
                         </div>
                     );
-                }
+                };
                 
                 return (
-                    <div className="space-y-4">
-                        <input
-                            type="text"
-                            placeholder="Title (optional)"
-                            value={newItemTitle}
-                            onChange={e => setNewItemTitle(e.target.value)}
-                            className="w-full bg-secondary p-2 rounded-md"
-                        />
-                        <textarea
-                            value={newItemContent}
-                            onChange={e => setNewItemContent(e.target.value)}
-                            rows={10}
-                            placeholder="Content"
-                            className="w-full bg-secondary p-2 rounded-md"
-                        />
-                        <select value={newItemCategory} onChange={e => setNewItemCategory(e.target.value)} className="w-full bg-secondary p-2 rounded-md">
-                            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                        </select>
-                        <div className="flex justify-end">
-                            <button onClick={modalState.type === 'add' ? handleAddItem : handleSaveItem} className="bg-accent text-text-on-accent px-4 py-2 rounded-md hover:bg-accent-hover">Save</button>
+                     <div className="relative">
+                        {isAnalyzing && (
+                            <div className="absolute inset-0 bg-primary bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-lg">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+                                <p className="mt-4 text-text-secondary">AI is organizing...</p>
+                            </div>
+                        )}
+                        <div className={`transition-opacity ${isAnalyzing ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                           {renderForm()}
                         </div>
                     </div>
-                );
+                )
 
             case 'translate':
                 return (
@@ -572,14 +646,16 @@ const App: React.FC = () => {
                             <ul className="list-disc list-inside space-y-2">
                                 <li><strong>Automatic Saving:</strong> All your items, categories, and theme preferences are automatically saved in your browser. Just close the tab, and everything will be here when you return.</li>
                                 <li><strong>Clipboard Monitoring:</strong> When the app is open, it can detect new items you copy to your system clipboard. A small prompt will appear, asking if you want to save the new content.</li>
+                                <li><strong className="text-pink-accent">AI-Assisted Organization:</strong> When you paste or save new content, Gemini AI will automatically suggest a title, category, and relevant tags to streamline organization.</li>
                             </ul>
                         </div>
             
                         <div>
                             <h4 className="text-lg font-semibold text-text-main mb-2">Managing Items</h4>
                             <ul className="list-disc list-inside space-y-2">
-                                <li><strong>Adding Items:</strong> The quickest way is to press <strong className="text-accent">Ctrl+V</strong> (or Cmd+V) anywhere in the app to paste content directly. You can also click the <strong className="text-accent">'+'</strong> button in the header.</li>
+                                <li><strong>Adding Items:</strong> The quickest way is to press <strong className="text-accent">Ctrl+V</strong> (or Cmd+V) anywhere in the app to paste and trigger the AI analysis. You can also click the <strong className="text-accent">'+'</strong> button in the header for a blank note.</li>
                                 <li><strong>Copying Items:</strong> Simply click on the content area of any text, link, or image card to instantly copy it back to your clipboard.</li>
+                                <li><strong>Searching:</strong> The search bar now also looks through item titles and tags, in addition to content.</li>
                                 <li><strong>Editing & Deleting:</strong> Hover over any card to reveal icons for editing or deleting.</li>
                                 <li><strong>Drag & Drop:</strong> Click and drag any item to reorder it within the dynamic masonry grid.</li>
                                 <li><strong>Bulk Actions:</strong> Select multiple items by clicking the selection icon that appears on hover. An action bar will appear at the bottom, allowing you to move or delete all selected items at once.</li>
@@ -744,7 +820,7 @@ const App: React.FC = () => {
                     <div className="flex justify-end space-x-2">
                         <button onClick={() => setClipboardPrompt(null)} className="px-3 py-1 text-sm rounded bg-secondary-hover">Dismiss</button>
                         <button onClick={() => {
-                            addItem(clipboardPrompt.content, clipboardPrompt.type, clipboardPrompt.type === 'image' ? 'Images' : 'General');
+                            initiateNewItemFromContent(clipboardPrompt.content, clipboardPrompt.type);
                             setClipboardPrompt(null);
                         }} className="px-3 py-1 text-sm rounded bg-accent text-text-on-accent">Save</button>
                     </div>
