@@ -505,9 +505,9 @@ const App: React.FC = () => {
                             <label className="text-sm font-medium text-text-secondary">Tags</label>
                             <div className="flex flex-wrap items-center gap-2 p-2 bg-secondary rounded-md min-h-[40px]">
                                 {newItemTags.map((tag, index) => (
-                                    <div key={index} className="flex items-center gap-1 bg-accent bg-opacity-30 text-accent text-sm rounded-full px-2 py-0.5">
+                                    <div key={index} className="flex items-center gap-1 bg-secondary-hover text-tag-text text-sm rounded-full px-2 py-0.5">
                                         <span>{tag}</span>
-                                        <button onClick={() => setNewItemTags(newItemTags.filter(t => t !== tag))} className="text-accent hover:text-white">
+                                        <button onClick={() => setNewItemTags(newItemTags.filter(t => t !== tag))} className="text-tag-text hover:opacity-75">
                                             <Icon name="close" className="w-3 h-3"/>
                                         </button>
                                     </div>
