@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Icon } from './components/Icons';
 
@@ -21,4 +20,28 @@ export const isLink = (text: string): boolean => {
     } catch (_) {
         return false;
     }
+};
+
+export const highlightText = (text: string, highlight: string): React.ReactNode => {
+  if (!text || !highlight.trim()) {
+    return text;
+  }
+  // Escape special characters for regex
+  const safeHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${safeHighlight})`, 'gi');
+  const parts = text.split(regex);
+  // FIX: Replaced JSX with React.createElement to fix errors related to using JSX syntax in a .ts file.
+  return React.createElement(
+    React.Fragment,
+    null,
+    parts.map((part, i) =>
+      regex.test(part)
+        ? React.createElement(
+            'mark',
+            { key: i, className: 'bg-pink-accent bg-opacity-50 text-inherit rounded-sm p-0 m-0' },
+            part
+          )
+        : part
+    )
+  );
 };

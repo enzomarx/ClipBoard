@@ -98,10 +98,16 @@ const App: React.FC = () => {
         .filter(item => activeCategory === 'All' || item.category === activeCategory)
         .filter(item => {
             const searchText = searchTerm.toLowerCase();
+            if (!searchText) return true;
+
+            const searchInTags = (tags?: string[]) => tags ? tags.some(tag => tag.toLowerCase().includes(searchText)) : false;
+
             if (item.type === ItemType.TaskList) {
                  try {
                     const taskList: TaskListContent = JSON.parse(item.content);
-                    return taskList.title.toLowerCase().includes(searchText) || taskList.tasks.some(t => t.text.toLowerCase().includes(searchText));
+                    return taskList.title.toLowerCase().includes(searchText) || 
+                           taskList.tasks.some(t => t.text.toLowerCase().includes(searchText)) ||
+                           searchInTags(item.tags);
                  } catch {
                      return false;
                  }
@@ -109,7 +115,7 @@ const App: React.FC = () => {
             return (
                 item.title?.toLowerCase().includes(searchText) || 
                 item.content.toLowerCase().includes(searchText) ||
-                (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchText)))
+                searchInTags(item.tags)
             );
         }), [items, activeCategory, searchTerm]);
 
@@ -356,6 +362,7 @@ const App: React.FC = () => {
                 try {
                     const parsed = JSON.parse(item.content) as TaskListContent;
                     setTaskListData(parsed);
+                    setNewItemTags(item.tags || []);
                 } catch {
                     setTaskListData({ title: 'New Task List', tasks: [{ id: crypto.randomUUID(), text: '', completed: false }] });
                 }
@@ -398,7 +405,7 @@ const App: React.FC = () => {
 
         if (modalState.item.type === ItemType.TaskList) {
             const content = JSON.stringify(taskListData);
-            updateItem(modalState.item.id, content, newItemCategory);
+            updateItem(modalState.item.id, content, newItemCategory, taskListData.title, newItemTags);
         } else {
             updateItem(modalState.item.id, newItemContent, newItemCategory, newItemTitle, newItemTags);
         }
@@ -408,7 +415,7 @@ const App: React.FC = () => {
     const handleAddItem = () => {
         if (newItemCategory === 'Task List') {
              const content = JSON.stringify(taskListData);
-             addItem(content, ItemType.TaskList, newItemCategory, taskListData.title);
+             addItem(content, ItemType.TaskList, newItemCategory, taskListData.title, newItemTags);
         } else {
             if (newItemContent.trim() || newItemTitle.trim()) {
                 addItem(newItemContent, newItemType, newItemCategory, newItemTitle, newItemTags);
@@ -486,6 +493,19 @@ const App: React.FC = () => {
             importData(file);
         }
         event.target.value = '';
+    };
+
+    const handleItemContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        let value = e.target.value;
+        // Automatically convert '- ' at the beginning of a line to a bullet point '• '
+        if (value.endsWith('- ')) {
+            const lineStartIndex = value.lastIndexOf('\n', value.length - 3) + 1;
+            const line = value.substring(lineStartIndex);
+            if (line.trim() === '-') {
+                value = value.substring(0, value.length - 2) + '• ';
+            }
+        }
+        setNewItemContent(value);
     };
 
     const renderModalContent = () => {
@@ -599,7 +619,7 @@ const App: React.FC = () => {
                             />
                             <textarea
                                 value={newItemContent}
-                                onChange={e => setNewItemContent(e.target.value)}
+                                onChange={handleItemContentChange}
                                 rows={10}
                                 placeholder="Content"
                                 className="w-full bg-secondary p-2 rounded-md"
@@ -784,6 +804,7 @@ const App: React.FC = () => {
                                             isDragging={draggedItemId === item.id}
                                             isFocused={focusedItemId === item.id}
                                             onToggleTask={toggleTaskCompleted}
+                                            searchTerm={searchTerm}
                                         />
                                    ))}
                                </div>

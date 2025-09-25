@@ -12,6 +12,8 @@ type ShapeMode = 'fill' | 'stroke';
 type Coords = { x: number; y: number };
 type HistoryState = { imageData: ImageData; width: number; height: number };
 
+const FONT_FAMILIES = ['sans-serif', 'serif', 'monospace', 'Arial', 'Georgia', 'Impact', 'Verdana', 'Courier New', 'Comic Sans MS'];
+
 const ToolButton: React.FC<{
   icon: React.ComponentProps<typeof Icon>['name'];
   label: string;
@@ -47,6 +49,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ src, onSave, onClose }
   const [shapeMode, setShapeMode] = useState<ShapeMode>('fill');
   const [fontSize, setFontSize] = useState(48);
   const [textInput, setTextInput] = useState('Hello World');
+  const [fontFamily, setFontFamily] = useState('sans-serif');
+  const [textAlign, setTextAlign] = useState<CanvasTextAlign>('left');
   const [exportFormat, setExportFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
   const [jpegQuality, setJpegQuality] = useState(0.92);
 
@@ -179,9 +183,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ src, onSave, onClose }
       ctx.stroke();
     } else if (tool === 'text') {
         ctx.globalCompositeOperation = 'source-over';
-        ctx.font = `${fontSize}px sans-serif`;
+        ctx.font = `${fontSize}px ${fontFamily}`;
         ctx.fillStyle = color;
-        ctx.fillText(textInput, coords.x, coords.y);
+        ctx.textAlign = textAlign;
+
+        const lines = textInput.split('\n');
+        const lineHeight = fontSize * 1.2;
+
+        lines.forEach((line, index) => {
+            ctx.fillText(line, coords.x, coords.y + (index * lineHeight));
+        });
+
         saveState();
         setIsActing(false);
     }
@@ -355,8 +367,21 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ src, onSave, onClose }
     }
     if (tool === 'text') {
         return (
-             <>
-                <input type="text" value={textInput} onChange={e => setTextInput(e.target.value)} className="bg-background rounded-md px-2 py-1 text-sm" placeholder="Your text..."/>
+             <div className="flex items-center space-x-2 flex-wrap gap-2">
+                <textarea 
+                    value={textInput} 
+                    onChange={e => setTextInput(e.target.value)} 
+                    className="bg-background rounded-md px-2 py-1 text-sm w-40 h-12" 
+                    placeholder="Your text..."
+                />
+                <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="bg-background text-text-main text-sm rounded-md px-2 py-1 h-8">
+                    {FONT_FAMILIES.map(font => <option key={font} value={font}>{font}</option>)}
+                </select>
+                <div className="flex bg-secondary p-1 rounded-md">
+                    <ToolButton icon="align-left" label="Align Left" isActive={textAlign === 'left'} onClick={() => setTextAlign('left')} />
+                    <ToolButton icon="align-center" label="Align Center" isActive={textAlign === 'center'} onClick={() => setTextAlign('center')} />
+                    <ToolButton icon="align-right" label="Align Right" isActive={textAlign === 'right'} onClick={() => setTextAlign('right')} />
+                </div>
                  <label className="flex items-center space-x-2 text-text-secondary cursor-pointer">
                     <span>Color</span>
                     <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded border-none bg-transparent cursor-pointer" />
@@ -365,7 +390,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ src, onSave, onClose }
                     <span>Size</span>
                     <input type="range" min="8" max="128" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-24 accent-accent" />
                 </label>
-             </>
+             </div>
         )
     }
      if (tool === 'crop' && isActing) {

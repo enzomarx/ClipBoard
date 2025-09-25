@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { ClipboardItem, TaskListContent } from '../types';
 import { ItemType } from '../types';
 import { Icon } from './Icons';
-import { getCategoryIcon } from '../utils';
+import { getCategoryIcon, highlightText } from '../utils';
 
 interface ClipboardItemCardProps {
   item: ClipboardItem;
@@ -18,6 +18,7 @@ interface ClipboardItemCardProps {
   isDragging: boolean;
   isFocused: boolean;
   onToggleTask: (itemId: string, taskId: string) => void;
+  searchTerm: string;
 }
 
 const ToolButton: React.FC<{ onClick: () => void, icon: React.ComponentProps<typeof Icon>['name'], label: string }> = ({ onClick, icon, label }) => (
@@ -26,7 +27,7 @@ const ToolButton: React.FC<{ onClick: () => void, icon: React.ComponentProps<typ
     </button>
 );
 
-export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDelete, onEdit, onTranslate, onImageClick, isSelected, onToggleSelect, onDragStart, onDrop, onDragOver, isDragging, isFocused, onToggleTask }) => {
+export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDelete, onEdit, onTranslate, onImageClick, isSelected, onToggleSelect, onDragStart, onDrop, onDragOver, isDragging, isFocused, onToggleTask, searchTerm }) => {
     const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
     const handleCopy = async () => {
@@ -81,7 +82,7 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
             case ItemType.Image:
                 return (
                     <div className="w-full p-2 flex flex-col">
-                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate self-start px-2">{item.title}</h3>}
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate self-start px-2">{highlightText(item.title, searchTerm)}</h3>}
                         <div className="w-full bg-black/10 dark:bg-black/20 rounded-md flex items-center justify-center min-h-[100px] overflow-hidden">
                             <img 
                                 src={item.content} 
@@ -95,9 +96,9 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
             case ItemType.Link:
                 return (
                      <div className="p-4">
-                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{item.title}</h3>}
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{highlightText(item.title, searchTerm)}</h3>}
                         <a href={item.content} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-accent hover:underline break-all">
-                            {item.content}
+                            {highlightText(item.content, searchTerm)}
                         </a>
                     </div>
                 );
@@ -106,7 +107,7 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
                     const taskList: TaskListContent = JSON.parse(item.content);
                     return (
                         <div className="p-4 w-full h-full max-h-48 overflow-y-auto">
-                            <h3 className="font-bold text-text-main truncate mb-2">{taskList.title || 'Task List'}</h3>
+                            <h3 className="font-bold text-text-main truncate mb-2">{highlightText(taskList.title || 'Task List', searchTerm)}</h3>
                             <ul className="space-y-2">
                                 {taskList.tasks.map(task => (
                                     <li key={task.id} className="flex items-center space-x-2" onClick={e => e.stopPropagation()}>
@@ -117,7 +118,7 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
                                             className="w-4 h-4 rounded bg-secondary border-text-secondary text-accent focus:ring-accent shrink-0"
                                         />
                                         <span className={`flex-grow text-sm ${task.completed ? 'line-through text-text-secondary' : 'text-text-main'}`}>
-                                            {task.text}
+                                            {highlightText(task.text, searchTerm)}
                                         </span>
                                     </li>
                                 ))}
@@ -131,8 +132,8 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
             default:
                 return (
                     <div className="p-4 w-full max-h-48 overflow-y-auto">
-                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{item.title}</h3>}
-                        {item.content && <p className="text-text-secondary whitespace-pre-wrap break-words">{item.content}</p>}
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{highlightText(item.title, searchTerm)}</h3>}
+                        {item.content && <p className="text-text-secondary whitespace-pre-wrap break-words">{highlightText(item.content, searchTerm)}</p>}
                     </div>
                 );
         }
@@ -174,7 +175,7 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
                 <div className="px-4 py-2 flex flex-wrap gap-2">
                     {item.tags.map(tag => (
                         <span key={tag} className="bg-secondary text-tag-text text-xs font-semibold px-2 py-1 rounded-full">
-                            #{tag}
+                            #{highlightText(tag, searchTerm)}
                         </span>
                     ))}
                 </div>
