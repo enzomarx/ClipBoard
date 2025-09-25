@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import type { ClipboardItem, TaskListContent, ClipboardHistoryItem } from '../types';
 import { ItemType } from '../types';
@@ -159,6 +158,21 @@ export const useClipboardManager = () => {
             setActiveCategory('All');
         }
     }, [activeCategory]);
+    
+    const updateCategory = useCallback((oldName: string, newName: string) => {
+        const newTrimmedName = newName.trim();
+        if (!newTrimmedName || newTrimmedName === oldName || categories.includes(newTrimmedName)) {
+            return;
+        }
+
+        setCategories(prev => prev.map(c => c === oldName ? newTrimmedName : c));
+
+        setItems(prev => prev.map(item => item.category === oldName ? { ...item, category: newTrimmedName } : item));
+
+        if (activeCategory === oldName) {
+            setActiveCategory(newTrimmedName);
+        }
+    }, [categories, activeCategory]);
 
     const toggleSelectItem = useCallback((id: string) => {
         setSelectedItems(prev => 
@@ -255,6 +269,7 @@ export const useClipboardManager = () => {
         deleteItem,
         addCategory,
         deleteCategory,
+        updateCategory,
         setActiveCategory,
         setSearchTerm,
         exportData,

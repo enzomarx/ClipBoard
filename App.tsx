@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useClipboardManager } from './hooks/useClipboardManager';
 import { Header } from './components/Header';
@@ -16,7 +15,7 @@ import { ImageEditor } from './components/ImageEditor';
 const App: React.FC = () => {
     const {
         items, categories, activeCategory, searchTerm, isLoading, selectedItems, clipboardHistory, storageError,
-        addItem, updateItem, deleteItem, addCategory, deleteCategory,
+        addItem, updateItem, deleteItem, addCategory, deleteCategory, updateCategory,
         setActiveCategory, setSearchTerm, exportData, importData,
         toggleSelectItem, selectAllFilteredItems, clearSelection, deleteSelectedItems, moveSelectedItems,
         reorderItems, toggleTaskCompleted, addToClipboardHistory, clearClipboardHistory,
@@ -44,6 +43,10 @@ const App: React.FC = () => {
         return (savedTheme as 'light' | 'dark') || (prefersDark ? 'dark' : 'light');
     });
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isAiOrganizationEnabled, setIsAiOrganizationEnabled] = useState(() => {
+        const saved = localStorage.getItem('ai-organization-enabled');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const lastCheckedContentRef = React.useRef<string>('');
@@ -77,6 +80,10 @@ const App: React.FC = () => {
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
+    
+    useEffect(() => {
+        localStorage.setItem('ai-organization-enabled', JSON.stringify(isAiOrganizationEnabled));
+    }, [isAiOrganizationEnabled]);
 
     const toggleTheme = useCallback(() => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
@@ -275,20 +282,22 @@ const App: React.FC = () => {
         setNewItemCategory(type === ItemType.Image ? 'Images' : 'General');
         setNewItemTags([]);
 
-        setIsAnalyzing(true);
-        try {
-            const suggestions = await analyzeContentForOrganization(content, type, categories);
-            setNewItemTitle(suggestions.title || '');
-            // Check if suggested category exists, otherwise fallback to a default
-            if (suggestions.category && categories.includes(suggestions.category)) {
-                 setNewItemCategory(suggestions.category);
+        if (isAiOrganizationEnabled) {
+            setIsAnalyzing(true);
+            try {
+                const suggestions = await analyzeContentForOrganization(content, type, categories);
+                setNewItemTitle(suggestions.title || '');
+                // Check if suggested category exists, otherwise fallback to a default
+                if (suggestions.category && categories.includes(suggestions.category)) {
+                     setNewItemCategory(suggestions.category);
+                }
+                setNewItemTags(suggestions.tags || []);
+            } catch (error) {
+                console.error("AI analysis failed:", error);
+                // Optionally: show a user-facing toast/notification
+            } finally {
+                setIsAnalyzing(false);
             }
-            setNewItemTags(suggestions.tags || []);
-        } catch (error) {
-            console.error("AI analysis failed:", error);
-            // Optionally: show a user-facing toast/notification
-        } finally {
-            setIsAnalyzing(false);
         }
     };
 
@@ -335,7 +344,7 @@ const App: React.FC = () => {
 
         document.addEventListener('paste', handlePaste);
         return () => document.removeEventListener('paste', handlePaste);
-    }, [addItem, addToClipboardHistory, categories]);
+    }, [addItem, addToClipboardHistory, categories, isAiOrganizationEnabled]);
 
     const handleOpenModal = (type: 'add' | 'edit' | 'translate' | 'history', item?: ClipboardItem | null) => {
         setModalState({ type, item: item || null });
@@ -646,7 +655,7 @@ const App: React.FC = () => {
                             <ul className="list-disc list-inside space-y-2">
                                 <li><strong>Automatic Saving:</strong> All your items, categories, and theme preferences are automatically saved in your browser. Just close the tab, and everything will be here when you return.</li>
                                 <li><strong>Clipboard Monitoring:</strong> When the app is open, it can detect new items you copy to your system clipboard. A small prompt will appear, asking if you want to save the new content.</li>
-                                <li><strong className="text-pink-accent">AI-Assisted Organization:</strong> When you paste or save new content, Gemini AI will automatically suggest a title, category, and relevant tags to streamline organization.</li>
+                                <li><strong className="text-pink-accent">AI-Assisted Organization:</strong> When you paste or save new content, Gemini AI will automatically suggest a title, category, and relevant tags to streamline organization. You can toggle this feature in the sidebar.</li>
                             </ul>
                         </div>
             
@@ -674,7 +683,7 @@ const App: React.FC = () => {
                         <div>
                             <h4 className="text-lg font-semibold text-text-main mb-2">Interface & Shortcuts</h4>
                             <ul className="list-disc list-inside space-y-2">
-                                <li><strong>Sidebar:</strong> Filter by category, collapse the sidebar for more space, or click the <strong className="text-accent">'+'</strong> at the bottom of the list to add a new category inline.</li>
+                                <li><strong>Sidebar:</strong> Filter by category, collapse the sidebar for more space, or click the <strong className="text-accent">'+'</strong> at the bottom of the list to add a new category inline. Hover over custom categories to edit or delete them.</li>
                                 <li><strong>Theme Toggle:</strong> Click the sun/moon icon in the header to switch between light and dark modes.</li>
                                 <li><strong>Clipboard History:</strong> Click the history icon or press <strong className="text-accent">Ctrl+Shift+H</strong> to see a log of recently copied items that you can save.</li>
                                 <li><strong>Keyboard Navigation:</strong>
@@ -730,8 +739,11 @@ const App: React.FC = () => {
                 setActiveCategory={setActiveCategory} 
                 onAddCategory={addCategory}
                 onDeleteCategory={deleteCategory}
+                onUpdateCategory={updateCategory}
                 isCollapsed={isSidebarCollapsed}
                 onToggle={toggleSidebar}
+                isAiEnabled={isAiOrganizationEnabled}
+                onToggleAi={() => setIsAiOrganizationEnabled(p => !p)}
             />
             <div className={`flex-grow flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
                 <Header 

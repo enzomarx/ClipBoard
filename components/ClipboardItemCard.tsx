@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { ClipboardItem, TaskListContent } from '../types';
 import { ItemType } from '../types';
@@ -167,7 +166,7 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
             {item.tags && item.tags.length > 0 && (
                 <div className="px-4 py-2 flex flex-wrap gap-2">
                     {item.tags.map(tag => (
-                        <span key={tag} className="bg-secondary text-text-secondary text-xs font-semibold px-2 py-1 rounded-full">
+                        <span key={tag} className="bg-secondary text-text-main text-xs font-semibold px-2 py-1 rounded-full">
                             #{tag}
                         </span>
                     ))}
