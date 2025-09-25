@@ -55,12 +55,13 @@ export const useClipboardManager = () => {
     }, [items, categories, clipboardHistory, isLoading, storageError]);
 
 
-    const addItem = useCallback((content: string, type: ItemType, category: string = "General"): ClipboardItem => {
+    const addItem = useCallback((content: string, type: ItemType, category: string = "General", title: string = ""): ClipboardItem => {
         const detectedType = type === ItemType.Text && isLink(content) ? ItemType.Link : type;
         const randomColor = CARD_COLOR_NAMES[Math.floor(Math.random() * CARD_COLOR_NAMES.length)];
         const newItem: ClipboardItem = {
             id: crypto.randomUUID(),
             type: detectedType,
+            title,
             content,
             category,
             createdAt: Date.now(),
@@ -70,12 +71,15 @@ export const useClipboardManager = () => {
         return newItem;
     }, []);
 
-    const updateItem = useCallback((id: string, newContent: string, newCategory?: string) => {
+    const updateItem = useCallback((id: string, newContent: string, newCategory?: string, newTitle?: string) => {
         setItems(prev => prev.map(item => {
             if (item.id === id) {
-                const updatedItem = { ...item, content: newContent };
+                const updatedItem: ClipboardItem = { ...item, content: newContent };
                 if (newCategory) {
                     updatedItem.category = newCategory;
+                }
+                if (typeof newTitle !== 'undefined') {
+                    updatedItem.title = newTitle;
                 }
                  if (updatedItem.type !== ItemType.TaskList && updatedItem.type === ItemType.Text && isLink(newContent)) {
                     updatedItem.type = ItemType.Link;

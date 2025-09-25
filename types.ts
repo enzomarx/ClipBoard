@@ -20,6 +20,7 @@ export interface TaskListContent {
 export interface ClipboardItem {
   id: string;
   type: ItemType;
+  title?: string;
   content: string; // For TaskList, this will be a stringified TaskListContent
   category: string;
   createdAt: number;

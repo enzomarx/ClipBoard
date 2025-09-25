@@ -27,6 +27,7 @@ const App: React.FC = () => {
     }>({ type: null, item: null });
     
     const [newItemContent, setNewItemContent] = useState('');
+    const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('General');
     const [taskListData, setTaskListData] = useState<TaskListContent>({ title: '', tasks: [] });
 
@@ -85,16 +86,16 @@ const App: React.FC = () => {
     const filteredItems = useMemo(() => items
         .filter(item => activeCategory === 'All' || item.category === activeCategory)
         .filter(item => {
+            const searchText = searchTerm.toLowerCase();
             if (item.type === ItemType.TaskList) {
                  try {
                     const taskList: TaskListContent = JSON.parse(item.content);
-                    const searchText = searchTerm.toLowerCase();
                     return taskList.title.toLowerCase().includes(searchText) || taskList.tasks.some(t => t.text.toLowerCase().includes(searchText));
                  } catch {
                      return false;
                  }
             }
-            return item.content.toLowerCase().includes(searchTerm.toLowerCase());
+            return (item.title?.toLowerCase().includes(searchText) || item.content.toLowerCase().includes(searchText));
         }), [items, activeCategory, searchTerm]);
 
     const columns = useMemo(() => {
@@ -320,10 +321,12 @@ const App: React.FC = () => {
                 }
              } else {
                  setNewItemContent(item.content);
+                 setNewItemTitle(item.title || '');
              }
             setNewItemCategory(item.category);
         } else if (type === 'add') {
             setNewItemContent('');
+            setNewItemTitle('');
             setNewItemCategory(activeCategory !== 'All' ? activeCategory : 'General');
             setTaskListData({ title: '', tasks: [{ id: crypto.randomUUID(), text: '', completed: false }] });
         } else if (type === 'translate' && item) {
@@ -342,6 +345,7 @@ const App: React.FC = () => {
     const handleCloseModal = () => {
         setModalState({ type: null, item: null });
         setNewItemContent('');
+        setNewItemTitle('');
         setNewItemCategory('General');
     };
 
@@ -352,7 +356,7 @@ const App: React.FC = () => {
             const content = JSON.stringify(taskListData);
             updateItem(modalState.item.id, content, newItemCategory);
         } else {
-            updateItem(modalState.item.id, newItemContent, newItemCategory);
+            updateItem(modalState.item.id, newItemContent, newItemCategory, newItemTitle);
         }
         handleCloseModal();
     };
@@ -362,8 +366,8 @@ const App: React.FC = () => {
              const content = JSON.stringify(taskListData);
              addItem(content, ItemType.TaskList, newItemCategory);
         } else {
-            if (newItemContent.trim()) {
-                addItem(newItemContent, ItemType.Text, newItemCategory);
+            if (newItemContent.trim() || newItemTitle.trim()) {
+                addItem(newItemContent, ItemType.Text, newItemCategory, newItemTitle);
             }
         }
         handleCloseModal();
@@ -488,6 +492,13 @@ const App: React.FC = () => {
                 if (isImageItem) {
                     return (
                         <div className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="Title (optional)"
+                                value={newItemTitle}
+                                onChange={e => setNewItemTitle(e.target.value)}
+                                className="w-full bg-secondary p-2 rounded-md"
+                            />
                             <div className="flex justify-center bg-secondary p-2 rounded-md">
                                 <img src={modalState.item?.content} alt="Pasted content preview" className="max-h-64 object-contain rounded" />
                             </div>
@@ -503,10 +514,18 @@ const App: React.FC = () => {
                 
                 return (
                     <div className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="Title (optional)"
+                            value={newItemTitle}
+                            onChange={e => setNewItemTitle(e.target.value)}
+                            className="w-full bg-secondary p-2 rounded-md"
+                        />
                         <textarea
                             value={newItemContent}
                             onChange={e => setNewItemContent(e.target.value)}
                             rows={10}
+                            placeholder="Content"
                             className="w-full bg-secondary p-2 rounded-md"
                         />
                         <select value={newItemCategory} onChange={e => setNewItemCategory(e.target.value)} className="w-full bg-secondary p-2 rounded-md">

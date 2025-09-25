@@ -81,13 +81,15 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
         switch (item.type) {
             case ItemType.Image:
                 return (
-                    <div className="w-full h-full flex items-center justify-center p-2">
-                        <img src={item.content} alt="clipboard content" className="max-h-48 w-full object-contain pointer-events-none" />
+                    <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate self-start px-2">{item.title}</h3>}
+                        <img src={item.content} alt={item.title || "clipboard content"} className="max-h-48 w-full object-contain pointer-events-none" />
                     </div>
                 );
             case ItemType.Link:
                 return (
                      <div className="p-4">
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{item.title}</h3>}
                         <a href={item.content} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-accent hover:underline break-all">
                             {item.content}
                         </a>
@@ -121,7 +123,12 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
                 }
             case ItemType.Text:
             default:
-                return <p className="p-4 text-text-secondary whitespace-pre-wrap break-words max-h-48 overflow-y-auto">{item.content}</p>;
+                return (
+                    <div className="p-4 w-full max-h-48 overflow-y-auto">
+                        {item.title && <h3 className="font-bold text-text-main mb-2 truncate">{item.title}</h3>}
+                        {item.content && <p className="text-text-secondary whitespace-pre-wrap break-words">{item.content}</p>}
+                    </div>
+                );
         }
     };
 
