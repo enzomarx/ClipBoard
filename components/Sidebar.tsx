@@ -130,8 +130,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <button
                             onClick={() => setActiveCategory(cat)}
                             title={isCollapsed ? cat : undefined}
-                            className={`w-full text-left transition-colors duration-200 font-medium border-l-4 flex items-center pr-10 ${
-                            isCollapsed ? 'justify-center py-3' : 'px-6 py-2.5'
+                            className={`w-full text-left transition-colors duration-200 font-medium border-l-4 flex items-center ${
+                            isCollapsed ? 'justify-center py-3' : 'px-6 py-2.5 pr-10'
                             } ${
                             activeCategory === cat 
                             ? 'border-accent text-text-main' 

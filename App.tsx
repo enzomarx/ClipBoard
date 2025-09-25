@@ -30,6 +30,7 @@ const App: React.FC = () => {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('General');
     const [newItemTags, setNewItemTags] = useState<string[]>([]);
+    const [newItemType, setNewItemType] = useState<ItemType>(ItemType.Text);
     const [taskListData, setTaskListData] = useState<TaskListContent>({ title: '', tasks: [] });
 
     const [translationResult, setTranslationResult] = useState<{ text: string; error: string; loading: boolean }>({ text: '', error: '', loading: false });
@@ -278,11 +279,12 @@ const App: React.FC = () => {
     const initiateNewItemFromContent = async (content: string, type: ItemType) => {
         setModalState({ type: 'add', item: null });
         setNewItemContent(content);
+        setNewItemType(type);
         setNewItemTitle('');
         setNewItemCategory(type === ItemType.Image ? 'Images' : 'General');
         setNewItemTags([]);
 
-        if (isAiOrganizationEnabled) {
+        if (isAiOrganizationEnabled && type !== ItemType.Image) {
             setIsAnalyzing(true);
             try {
                 const suggestions = await analyzeContentForOrganization(content, type, categories);
@@ -366,6 +368,7 @@ const App: React.FC = () => {
         } else if (type === 'add') {
             setNewItemContent('');
             setNewItemTitle('');
+            setNewItemType(ItemType.Text);
             setNewItemCategory(activeCategory !== 'All' ? activeCategory : 'General');
             setNewItemTags([]);
             setTaskListData({ title: '', tasks: [{ id: crypto.randomUUID(), text: '', completed: false }] });
@@ -408,7 +411,7 @@ const App: React.FC = () => {
              addItem(content, ItemType.TaskList, newItemCategory, taskListData.title);
         } else {
             if (newItemContent.trim() || newItemTitle.trim()) {
-                addItem(newItemContent, ItemType.Text, newItemCategory, newItemTitle, newItemTags);
+                addItem(newItemContent, newItemType, newItemCategory, newItemTitle, newItemTags);
             }
         }
         handleCloseModal();
@@ -493,7 +496,7 @@ const App: React.FC = () => {
             case 'edit':
                 const isTaskList = (modalState.type === 'edit' && modalState.item?.type === ItemType.TaskList) || (modalState.type === 'add' && newItemCategory === 'Task List');
                 const isImageItem = modalState.type === 'edit' && modalState.item?.type === ItemType.Image;
-                const isAddImage = modalState.type === 'add' && newItemContent.startsWith('data:image/');
+                const isAddImage = modalState.type === 'add' && newItemType === ItemType.Image;
 
                 const commonFields = (
                     <>

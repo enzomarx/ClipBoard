@@ -80,9 +80,16 @@ export const ClipboardItemCard: React.FC<ClipboardItemCardProps> = ({ item, onDe
         switch (item.type) {
             case ItemType.Image:
                 return (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                    <div className="w-full p-2 flex flex-col">
                         {item.title && <h3 className="font-bold text-text-main mb-2 truncate self-start px-2">{item.title}</h3>}
-                        <img src={item.content} alt={item.title || "clipboard content"} className="max-h-48 w-full object-contain pointer-events-none" />
+                        <div className="w-full bg-black/10 dark:bg-black/20 rounded-md flex items-center justify-center min-h-[100px] overflow-hidden">
+                            <img 
+                                src={item.content} 
+                                alt={item.title || "clipboard content"} 
+                                className="max-h-48 w-auto object-contain pointer-events-none"
+                                loading="lazy"
+                            />
+                        </div>
                     </div>
                 );
             case ItemType.Link:
